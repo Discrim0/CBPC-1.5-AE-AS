@@ -80,6 +80,7 @@ void DoHookNEW();
 //	}
 //}
 
+
 //console debug
 bool Debug_Execute(const ObScriptParam* paramInfo, ScriptData* scriptData, TESObjectREFR* thisObj,
 	TESObjectREFR* containingObj, Script* scriptObj, ScriptLocals* locals, double& result,
@@ -90,7 +91,7 @@ bool Debug_Execute(const ObScriptParam* paramInfo, ScriptData* scriptData, TESOb
 	char buffer2[MAX_PATH];
 	memset(buffer2, 0, MAX_PATH);
 
-	if (!ObjScript_ExtractArgs(paramInfo, scriptData, opcodeOffsetPtr, thisObj, containingObj, scriptObj, locals,
+	if (!ObScript_ExtractArgs(paramInfo, scriptData, opcodeOffsetPtr, thisObj, containingObj, scriptObj, locals,
 		buffer, buffer2))
 	{
 		return false;
@@ -124,44 +125,53 @@ bool Debug_Execute(const ObScriptParam* paramInfo, ScriptData* scriptData, TESOb
 
 extern "C"
 {
-
-	bool SKSEPlugin_Query(const SKSEInterface * skse, PluginInfo * info)
+	__declspec(dllexport) SKSEPluginVersionData SKSEPlugin_Version =
 	{
-		#ifdef RUNTIME_VR_VERSION_1_4_15
-		gLog.OpenRelative(CSIDL_MYDOCUMENTS, "\\My Games\\Skyrim VR\\SKSE\\CBPC-Collision.log");
-		#else
-		gLog.OpenRelative(CSIDL_MYDOCUMENTS, "\\My Games\\Skyrim Special Edition\\SKSE\\CBPC-Collision.log");
-		#endif
-		gLog.SetPrintLevel(IDebugLog::kLevel_Error);
-		gLog.SetLogLevel(IDebugLog::kLevel_DebugMessage);
+		SKSEPluginVersionData::kVersion,
 
-		LOG_ERR("CBPC Physics SKSE Plugin: %s", versionStr);
+		version,
+		"CBPC",
 
+		"Shizof",
+		"",
 
-		// populate info structure
-		info->infoVersion = PluginInfo::kInfoVersion;
-		info->name = "CBPC plugin";
-		info->version = version;
+		0,	// not version independent
+		{ RUNTIME_VERSION_1_6_353, 0 },	// compatible with 1.6.353
 
-		// store plugin handle so we can identify ourselves later
-		g_pluginHandle = skse->GetPluginHandle();
+		0,	// works with any version of the script extender. you probably do not need to put anything here
+	};
 
-		if (skse->isEditor)
-		{
-			LOG_ERR("loaded in editor, marking as incompatible\n");
-			return false;
-		}
-		else if (skse->runtimeVersion != CURRENT_RELEASE_RUNTIME)
-		{
-			LOG_ERR("unsupported runtime version %08X", skse->runtimeVersion);
-			return false;
-		}
-		// supported runtime version
+//	bool SKSEPlugin_Query(const SKSEInterface * skse, PluginInfo * info)
+//	{
+//#ifdef RUNTIME_VR_VERSION_1_4_15
+//		gLog.OpenRelative(CSIDL_MYDOCUMENTS, "\\My Games\\Skyrim VR\\SKSE\\CBPC-Collision.log");
+//#else
+//		gLog.OpenRelative(CSIDL_MYDOCUMENTS, "\\My Games\\Skyrim Special Edition\\SKSE\\CBPC-Collision.log");
+//#endif
+//		gLog.SetPrintLevel(IDebugLog::kLevel_Error);
+//		gLog.SetLogLevel(IDebugLog::kLevel_DebugMessage);
+//
+//		LOG_INFO("CBPC Physics SKSE Plugin\n");
+//		LOG_ERR("Query called\n");
+//
+//		// populate info structure
+//		info->infoVersion = PluginInfo::kInfoVersion;
+//		info->name = "CBPC plugin";
+//		info->version = 010400; // 1.4.0
+//
+//		// store plugin handle so we can identify ourselves later
+//		g_pluginHandle = skse->GetPluginHandle();
+//
+//		if (skse->isEditor)
+//		{
+//			LOG_ERR("loaded in editor, marking as incompatible\n");
+//			return false;
+//		}
+//
+//		LOG_ERR("Query complete\n");
+//		return true;
+//	}
 
-		LOG_ERR("Query complete\n");
-		return true;
-	}
-	
 	void SetupReceptors()
 	{
 		_MESSAGE("Building Event Sinks...");
@@ -182,8 +192,8 @@ extern "C"
 			case SKSEMessagingInterface::kMessage_DataLoaded:
 			{
 				GameLoad();
-				
-				#ifdef RUNTIME_VR_VERSION_1_4_15
+
+#ifdef RUNTIME_VR_VERSION_1_4_15
 				GetSettings();
 #endif
 
@@ -213,7 +223,21 @@ extern "C"
 	
 	bool SKSEPlugin_Load(const SKSEInterface* skse)
 	{
-		LOG_ERR("CBPC Loading");
+#ifdef RUNTIME_VR_VERSION_1_4_15
+		gLog.OpenRelative(CSIDL_MYDOCUMENTS, "\\My Games\\Skyrim VR\\SKSE\\CBPC-Collision.log");
+#else
+		gLog.OpenRelative(CSIDL_MYDOCUMENTS, "\\My Games\\Skyrim Special Edition\\SKSE\\CBPC-Collision.log");
+#endif
+		gLog.SetPrintLevel(IDebugLog::kLevel_Error);
+		gLog.SetLogLevel(IDebugLog::kLevel_DebugMessage);
+
+		LOG_INFO("CBPC Physics SKSE Plugin");
+		LOG_ERR("Query called");
+
+		// store plugin handle so we can identify ourselves later
+		g_pluginHandle = skse->GetPluginHandle();
+
+		LOG_ERR("CBPC Physics SKSE Plugin: %s", versionStr);
 
 		g_task = (SKSETaskInterface*)skse->QueryInterface(kInterface_Task);
 		if (!g_task)
@@ -221,8 +245,6 @@ extern "C"
 			LOG_ERR("Couldn't get Task interface");
 			return false;
 		}
-
-		//console debug
 		ObScriptCommand* hijackedCommand = nullptr;
 		for (ObScriptCommand* iter = g_firstConsoleCommand; iter->opcode < kObScript_NumConsoleCommands +
 			kObScript_ConsoleOpBase; ++iter)
@@ -239,9 +261,7 @@ extern "C"
 			params[0].typeID = ObScriptParam::kType_String;
 			params[0].typeStr = "String (optional)";
 			params[0].isOptional = 1;
-
 			ObScriptCommand cmd = *hijackedCommand;
-
 			cmd.longName = "cbpconfig";
 			cmd.shortName = "cbpc";
 			cmd.helpText = "cbpc <reload>";
@@ -251,7 +271,6 @@ extern "C"
 			cmd.execute = Debug_Execute;
 			cmd.flags = 0;
 			SafeWriteBuf(reinterpret_cast<uintptr_t>(hijackedCommand), &cmd, sizeof(cmd));
-
 			LOG_ERR("Console interface Loaded");
 		}
 		else
@@ -270,23 +289,18 @@ extern "C"
 			LOG_ERR("Register Succeeded");
 		}
 
-
-		
 		DoHookOLD();
+		
 		LOG_ERR("CBPC Load Complete");
 		
-
 		return true;
 	}
-
-
-
 };
 
-BOOL WINAPI DllMain(
-	_In_ HINSTANCE hinstDLL,
-	_In_ DWORD     fdwReason,
-	_In_ LPVOID    lpvReserved
-) {
-	return true;
-}
+//BOOL WINAPI DllMain(
+//	_In_ HINSTANCE hinstDLL,
+//	_In_ DWORD     fdwReason,
+//	_In_ LPVOID    lpvReserved
+//) {
+//	return true;
+//}

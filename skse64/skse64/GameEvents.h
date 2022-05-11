@@ -39,12 +39,12 @@ class EventDispatcher
 
 	// Note: in SE there are multiple identical copies of all these functions 
 	MEMBER_FN_PREFIX(EventDispatcher);
-	// 66B1C7AC473D5EA48E4FD620BBFE0A06392C5885+66
-	DEFINE_MEMBER_FN(AddEventSink_Internal, void, 0x0056B600, SinkT * eventSink);
-	// ??_7BGSProcedureShoutExecState@@6B@ dtor | +43
-	DEFINE_MEMBER_FN(RemoveEventSink_Internal, void, 0x00423B70, SinkT * eventSink);
-	// D6BA7CEC95B2C2B9C593A9AEE7F0ADFFB2C10E11+456
-	DEFINE_MEMBER_FN(SendEvent_Internal, void, 0x00177DC0, EventArgT * evn);
+	// 9FCA8C7632C2FC6D6E342E554B43402121BC4E44+66
+	DEFINE_MEMBER_FN(AddEventSink_Internal, void, 0x00587E20, SinkT * eventSink);
+	// ??_7BGSProcedureShoutExecState@@6B@ xref +21 last call
+	DEFINE_MEMBER_FN(RemoveEventSink_Internal, void, 0x0043C400, SinkT * eventSink);
+	// FB59C2DDF89F5248DF43230E39A6FECF8C997BA6+466
+	DEFINE_MEMBER_FN(SendEvent_Internal, void, 0x00181CB0, EventArgT * evn);
 
 public:
 
@@ -450,7 +450,6 @@ struct TESDeathEvent
 	UInt8			state;		// 10 -  0 - dying; 1 - death
 };
 
-
 struct TESEquipEvent
 {
 public:
@@ -464,7 +463,6 @@ public:
 	UInt32			 pad14;			// 14
 };
 STATIC_ASSERT(sizeof(TESEquipEvent) == 0x18);
-
 
 struct TESHitEvent
 {
@@ -670,7 +668,7 @@ public:
 	EventDispatcher<TESDeathEvent>						deathDispatcher;		//  3C8 - sink offset 058
 	EventDispatcher<void>								unk420;					//  420 - sink offset 068
 	EventDispatcher<void>								unk478;					//  478 - sink offset 070
-	EventDispatcher<TESEquipEvent>								unk4D0;					//  4D0 - sink offset 078
+	EventDispatcher<TESEquipEvent>						unk4D0;					//  4D0 - sink offset 078
 	EventDispatcher<void>								unk528;					//  528 - sink offset 080
 	EventDispatcher<void>								unk580;					//  580 - sink offset 088
 	EventDispatcher<void>								unk5D8;					//  5D8 - sink offset 090
